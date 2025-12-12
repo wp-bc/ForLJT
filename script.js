@@ -311,20 +311,17 @@ function initThree() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
 
-    scene.background = null; // <-- 改成这行
-
-    // 【建议】如果有雾效 (fog)，建议也注释掉，不然背景图会有一层灰蒙蒙的雾
-    // scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.01); // <-- 建议注释掉这行
+    new THREE.TextureLoader().load('./photos/bg.jpg', (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace; 
+        scene.background = texture;
+    });
 
     camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 2, CONFIG.camera.z);
 
-    // ==========================================
-    // 【修改点 2】alpha 设为 true (允许透明)
-    // ==========================================
     renderer = new THREE.WebGLRenderer({ 
         antialias: true, 
-        alpha: true,   // <--- 这里一定要改成 true！原来是 false
+        alpha: true,
         powerPreference: "high-performance" 
     });
     
