@@ -47,22 +47,22 @@
             color: #fceea7; text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
         }
 
-        /* --- 左侧侧边栏容器 (V16.4 新增：用于自动对齐) --- /
+        /* --- 左侧侧边栏容器 (V16.4 新增：用于自动对齐) --- */
         #left-sidebar {
             position: absolute; top: 20px; left: 20px; width: 200px;
-            display: flex; flex-direction: column; gap: 10px; / 面板与手势指引的间距 /
-            pointer-events: none; / 让容器不阻挡，内部元素单独开启 */
+            display: flex; flex-direction: column; gap: 10px; /* 面板与手势指引的间距 */
+            pointer-events: none; /* 让容器不阻挡，内部元素单独开启 */
             z-index: 20;
         }
 
-        /* --- 左上角：设置面板 (放在侧边栏内) --- /
+        /* --- 左上角：设置面板 (放在侧边栏内) --- */
         .top-left-panel {
             pointer-events: auto; display: flex; flex-direction: column; gap: 8px;
             background: rgba(5, 5, 5, 0.8); padding: 12px; border-radius: 4px;
             border: 1px solid rgba(212, 175, 55, 0.2); backdrop-filter: blur(8px);
             transition: all 0.4s ease;
             font-family: 'Microsoft YaHei', sans-serif;
-            width: 100%; box-sizing: border-box; / 填满侧边栏 */
+            width: 100%; box-sizing: border-box; /* 填满侧边栏 */
         }
         .panel-header { color: #888; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 2px; font-size: 10px; letter-spacing: 1px; }
 
@@ -80,10 +80,10 @@
         select.input-dark { cursor: pointer; appearance: none; }
         select.input-dark option { background: #000; color: #d4af37; padding: 5px; }
 
-        /* --- 手势交互指引 (V16.4 修改：网格布局) --- /
+        /* --- 手势交互指引 (V16.4 修改：网格布局) --- */
         .left-gesture-panel {
             pointer-events: none; opacity: 0.9; transition: all 0.4s ease;
-            display: grid; grid-template-columns: 1fr 1fr; / 两排 */
+            display: grid; grid-template-columns: 1fr 1fr; /* 两排 */
             gap: 8px; width: 100%; box-sizing: border-box;
         }
         .gesture-item {
@@ -754,7 +754,7 @@
             try {
                 const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
                 handLandmarker = await HandLandmarker.createFromOptions(vision, {
-                    baseOptions: { modelAssetPath: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task, delegate: "GPU" },
+                    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
                     runningMode: "VIDEO", numHands: 1
                 });
                 hint.innerText = "手势识别就绪";
