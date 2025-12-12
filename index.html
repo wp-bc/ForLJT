@@ -23,10 +23,10 @@
     <div id="ui-layer">
         <div id="top-right-controls">
             <button class="elegant-btn" id="fs-btn" onclick="toggleFullScreen()">⛶ 全屏显示</button>
-            <button class="elegant-btn" id="toggle-ui-btn" onclick="toggleUI()">👁 隐藏界面</button>
+            <button class="elegant-btn" id="toggle-ui-btn" onclick="toggleUI()">👁 显示界面</button>
         </div>
 
-        <div id="left-sidebar">
+        <div id="left-sidebar" class="panel-hidden">
             <div class="top-left-panel">
                 <div class="panel-header">自定义文本</div> <div class="control-row">
                     <input type="text" id="input-line1" class="input-dark" placeholder="第一行文字" oninput="updateTextConfig()">
@@ -61,11 +61,11 @@
                 <div class="panel-header" style="margin-top:8px;">粒子系统</div>
                 <div class="control-row">
                     <span class="control-label">装饰密度</span>
-                    <input type="range" min="500" max="3000" value="1500" class="slider" id="slider-tree">
+                    <input type="range" min="500" max="3000" value="3000" class="slider" id="slider-tree">
                 </div>
                 <div class="control-row">
                     <span class="control-label">星尘密度</span>
-                    <input type="range" min="500" max="5000" value="2500" class="slider" id="slider-dust">
+                    <input type="range" min="500" max="5000" value="5000" class="slider" id="slider-dust">
                 </div>
                 <button class="elegant-btn" style="width:100%; margin-top:5px;" onclick="applyParticleSettings()">⚡ 重建场景</button>
             </div>
@@ -90,7 +90,7 @@
             </div>
         </div>
 
-        <div class="bottom-left-panel">
+        <div class="bottom-left-panel panel-hidden">
             <label class="elegant-btn">
                 + 上传照片
                 <input type="file" id="file-input" multiple accept="image/*">

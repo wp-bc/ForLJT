@@ -27,7 +27,7 @@ const PRELOAD_MUSIC = './music/ms.mp3';
 
 const CONFIG = {
     colors: { bg: 0x000000, champagneGold: 0xffd966, deepGreen: 0x03180a, accentRed: 0x990000 },
-    particles: { count: 1500, dustCount: 2500, treeHeight: 24, treeRadius: 8 },
+    particles: { count: 3000, dustCount: 5000, treeHeight: 24, treeRadius: 8 },
     // 【新增】下落氛围配置
     falling: { 
         count: 800,        // 雪花和星星的总数
@@ -46,7 +46,7 @@ const STATE = {
     focusType: 0,
     hand: { detected: false, x: 0, y: 0 },
     rotation: { x: 0, y: 0 },
-    uiVisible: true, cameraVisible: true
+    uiVisible: false, cameraVisible: true
 };
 
 const FONT_STYLES = {
@@ -215,14 +215,20 @@ function initDraggableTitle() {
 
 window.toggleUI = function() {
     STATE.uiVisible = !STATE.uiVisible;
-    const tl = document.querySelector('.top-left-panel');
+    const tl = document.querySelector('#left-sidebar'); // 注意：这里建议改用ID选择器控制整个侧边栏
     const bl = document.querySelector('.bottom-left-panel');
-    const gest = document.querySelector('.left-gesture-panel');
     const btn = document.getElementById('toggle-ui-btn');
+    
     if(!STATE.uiVisible) {
-        tl.classList.add('panel-hidden'); bl.classList.add('panel-hidden'); gest.classList.add('panel-hidden'); btn.innerText = "👁 显示界面";
+        // 隐藏
+        tl.classList.add('panel-hidden'); 
+        bl.classList.add('panel-hidden'); 
+        btn.innerText = "👁 显示界面";
     } else {
-        tl.classList.remove('panel-hidden'); bl.classList.remove('panel-hidden'); gest.classList.remove('panel-hidden'); btn.innerText = "👁 隐藏界面";
+        // 显示
+        tl.classList.remove('panel-hidden'); 
+        bl.classList.remove('panel-hidden'); 
+        btn.innerText = "👁 隐藏界面";
     }
 }
 
