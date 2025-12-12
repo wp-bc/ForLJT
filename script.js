@@ -23,6 +23,8 @@ const PRELOAD_PHOTOS = [
     './photos/12.jpg'
 ];
 
+const PRELOAD_MUSIC = './music/可爱女人.mp3';
+
 const CONFIG = {
     colors: { bg: 0x000000, champagneGold: 0xffd966, deepGreen: 0x03180a, accentRed: 0x990000 },
     particles: { count: 1500, dustCount: 2500, treeHeight: 24, treeRadius: 8 },
@@ -98,6 +100,37 @@ let handLandmarker, videoElement;
 let caneTexture;
 let bgmAudio = new Audio(); bgmAudio.loop = true; let isMusicPlaying = false;
 
+//加载并尝试自动播放音乐
+function loadStaticMusic() {
+    bgmAudio.src = PRELOAD_MUSIC; 
+    bgmAudio.loop = true; // 确保循环播放
+
+    // 尝试直接播放
+    bgmAudio.play().then(() => {
+        // 如果成功（通常在有些设置了允许自动播放的浏览器）
+        isMusicPlaying = true;
+        updatePlayBtnUI(true);
+    }).catch((error) => {
+        // 如果失败（被浏览器拦截），则添加一个“一次性”点击监听
+        console.log("浏览器限制自动播放，等待用户点击...");
+        
+        // 只要用户点击屏幕任何地方，就开始播放
+        const startMusicOnClick = () => {
+            bgmAudio.play();
+            isMusicPlaying = true;
+            updatePlayBtnUI(true);
+            // 移除监听，防止重复触发
+            window.removeEventListener('click', startMusicOnClick);
+            window.removeEventListener('keydown', startMusicOnClick);
+            window.removeEventListener('touchstart', startMusicOnClick);
+        };
+
+        window.addEventListener('click', startMusicOnClick);
+        window.addEventListener('keydown', startMusicOnClick);
+        window.addEventListener('touchstart', startMusicOnClick);
+    });
+}
+
 async function init() {
     initThree();
     setupEnvironment();
@@ -106,12 +139,11 @@ async function init() {
     createParticles();
     createDust();
     
-    // ==========================================
-    // 【修改点 3】在初始化时调用加载照片的函数
-    // ==========================================
     loadStaticPhotos(); // <--- 这里调用加载本地照片
+
+    loadStaticMusic(); // <--- 这里调用加载本地音乐
     
-    // 如果你还需要“JOYEUX NOEL”那个默认文字图，可以保留下面这行，不需要就注释掉
+    // 是否加载默认图
     // createDefaultPhotos(); 
 
     setupPostProcessing();
