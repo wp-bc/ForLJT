@@ -5,9 +5,6 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
-// ==========================================
-// 【修改点 1】在这里定义你的照片路径列表
-// ==========================================
 const PRELOAD_PHOTOS = [
     './photos/1.jpg',
     './photos/2.jpg',
@@ -22,6 +19,7 @@ const PRELOAD_PHOTOS = [
     './photos/11.jpg',
     './photos/12.jpg'
 ];
+let bgTexture = null;
 
 const PRELOAD_MUSIC = './music/ms.mp3';
 
@@ -225,6 +223,20 @@ window.toggleUI = function() {
     }
 }
 
+function resizeBackground() {
+    if (!bgTexture || !bgTexture.image) return;
+
+    const canvasAspect = window.innerWidth / window.innerHeight;
+    const imageAspect = bgTexture.image.width / bgTexture.image.height;
+    const factor = imageAspect / canvasAspect;
+    
+    bgTexture.offset.x = factor > 1 ? (1 - 1 / factor) / 2 : 0;
+    bgTexture.repeat.x = factor > 1 ? 1 / factor : 1;
+
+    bgTexture.offset.y = factor > 1 ? 0 : (1 - factor) / 2;
+    bgTexture.repeat.y = factor > 1 ? 1 : factor;
+}
+
 window.toggleCameraDisplay = function() {
     STATE.cameraVisible = !STATE.cameraVisible;
     const cam = document.getElementById('webcam-wrapper');
@@ -311,9 +323,12 @@ function initThree() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
 
-    new THREE.TextureLoader().load('./photos/bg.jpg', (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace; 
+    const loader = new THREE.TextureLoader();
+    loader.load('./photos/bg.jpg', (texture) => {
+        bgTexture = texture; // 保存纹理引用
+        texture.colorSpace = THREE.SRGBColorSpace;
         scene.background = texture;
+        resizeBackground(); // 图片加载完成后立即计算一次比例
     });
 
     camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -634,7 +649,16 @@ function processGestures(result) {
 }
 
 window.setupEvents = function() {
-    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight); });
+    window.addEventListener('resize', () => { 
+        camera.aspect = window.innerWidth/window.innerHeight; 
+        camera.updateProjectionMatrix(); 
+        renderer.setSize(window.innerWidth, window.innerHeight); 
+        composer.setSize(window.innerWidth, window.innerHeight);
+        
+        // 【新增】窗口大小改变时，重新计算背景图比例
+        resizeBackground(); 
+    });
+    
     document.getElementById('file-input').addEventListener('change', (e) => {
         const files = e.target.files;
         if(!files.length) return;
