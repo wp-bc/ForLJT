@@ -1,5 +1,18 @@
 /* --- 基础样式 --- */
-body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Songti SC', 'SimSun', serif; }
+/* body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Songti SC', 'SimSun', serif; } */
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    /* background-color: #000000;  <-- 这行删掉或注释掉 */
+    
+    /* 【新增】添加背景图设置 */
+    background-image: url('./photos/bg.jpg');
+    background-size: cover;       /* 让图片铺满整个屏幕 */
+    background-position: center;  /* 图片居中显示 */
+    background-repeat: no-repeat; /* 不重复 */
+    
+    font-family: 'Songti SC', 'SimSun', serif; 
+}
 #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
 /* 引入精选艺术字体 */
