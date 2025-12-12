@@ -27,6 +27,14 @@ const CONFIG = {
     colors: { bg: 0x000000, champagneGold: 0xffd966, deepGreen: 0x03180a, accentRed: 0x990000 },
     particles: { count: 1500, dustCount: 2500, treeHeight: 24, treeRadius: 8 },
     camera: { z: 50 },
+    falling: { 
+        count: 400,        // 雪花和星星的总数
+        speed: 2.5,        // 下落速度
+        rangeX: 60,        // 水平分布范围
+        rangeZ: 30,        // 前后分布范围
+        topY: 40,          // 生成高度（顶部）
+        bottomY: -20       // 消失高度（底部）
+    },
     interaction: { rotationSpeed: 1.4, grabRadius: 0.55 }
 };
 
@@ -93,6 +101,7 @@ function loadMusicFromDB() {
 
 let scene, camera, renderer, composer;
 let mainGroup, particleSystem = [], photoMeshGroup = new THREE.Group();
+let fallingSystem = [];
 let clock = new THREE.Clock();
 let handLandmarker, videoElement;
 let caneTexture;
@@ -136,6 +145,7 @@ async function init() {
     createTextures();
     createParticles();
     createDust();
+    createFallingAtmosphere();
     
     loadStaticPhotos(); // <--- 这里调用加载本地照片
 
@@ -503,6 +513,78 @@ function createDust() {
     }
 }
 
+//创建下落的雪花和星光
+function createFallingAtmosphere() {
+    const snowGeo = new THREE.TetrahedronGeometry(0.12, 0); // 雪花形状（四面体）
+    const starGeo = new THREE.OctahedronGeometry(0.15, 0);  // 星星形状（八面体）
+
+    // 雪花材质：半透明白色
+    const snowMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    // 星光材质：高发光金色（配合辉光特效会很漂亮）
+    const starMat = new THREE.MeshStandardMaterial({
+        color: 0xffffee,
+        emissive: 0xffdd88,     // 自发光颜色
+        emissiveIntensity: 2.5, // 发光强度
+        roughness: 0,
+        metalness: 1
+    });
+
+    for (let i = 0; i < CONFIG.falling.count; i++) {
+        // 30% 是星星，70% 是雪花
+        const isStar = Math.random() > 0.7;
+        const mesh = new THREE.Mesh(isStar ? starGeo : snowGeo, isStar ? starMat : snowMat);
+
+        // 随机初始位置
+        mesh.position.set(
+            (Math.random() - 0.5) * CONFIG.falling.rangeX,
+            Math.random() * (CONFIG.falling.topY - CONFIG.falling.bottomY) + CONFIG.falling.bottomY,
+            (Math.random() - 0.5) * CONFIG.falling.rangeZ + 15 // +15 让它更靠近相机一点
+        );
+
+        // 存储每个粒子的独立运动参数
+        mesh.userData = {
+            velocity: (0.5 + Math.random() * 0.5) * CONFIG.falling.speed, // 随机速度
+            wobbleSpeed: Math.random() * 2.0, // 摇摆频率
+            wobbleAmp: Math.random() * 0.5,   // 摇摆幅度
+            offset: Math.random() * 100       // 时间偏移
+        };
+
+        // 随机旋转
+        mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+
+        mainGroup.add(mesh);
+        fallingSystem.push(mesh);
+    }
+}
+function updateFallingParticles(dt) {
+    fallingSystem.forEach(mesh => {
+        const data = mesh.userData;
+
+        // 1. 向下移动
+        mesh.position.y -= data.velocity * dt;
+
+        // 2. 左右轻微摇摆 (模拟空气阻力)
+        mesh.position.x += Math.sin(clock.elapsedTime * data.wobbleSpeed + data.offset) * data.wobbleAmp * dt;
+
+        // 3. 自身旋转
+        mesh.rotation.x += dt;
+        mesh.rotation.z += dt * 0.5;
+
+        // 4. 边界检查：如果掉到底部，就瞬移回顶部
+        if (mesh.position.y < CONFIG.falling.bottomY) {
+            mesh.position.y = CONFIG.falling.topY;
+            // 重新随机 X 和 Z，让分布更自然
+            mesh.position.x = (Math.random() - 0.5) * CONFIG.falling.rangeX;
+            mesh.position.z = (Math.random() - 0.5) * CONFIG.falling.rangeZ + 15;
+        }
+    });
+}
+
 function createDefaultPhotos() {
     const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
     const ctx = canvas.getContext('2d');
@@ -658,7 +740,7 @@ window.setupEvents = function() {
         // 【新增】窗口大小改变时，重新计算背景图比例
         resizeBackground(); 
     });
-    
+
     document.getElementById('file-input').addEventListener('change', (e) => {
         const files = e.target.files;
         if(!files.length) return;
@@ -746,6 +828,7 @@ function animate() {
     mainGroup.rotation.x = STATE.rotation.x;
 
     particleSystem.forEach(p => p.update(dt, STATE.mode, STATE.focusTarget));
+    updateFallingParticles(dt);
     composer.render();
 }
 
