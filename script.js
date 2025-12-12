@@ -310,11 +310,7 @@ function updatePlayBtnUI(playing) {
 function initThree() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
-    
-    // ==========================================
-    // 【修改点 1】背景设为 null (透明)，而不是黑色颜色
-    // ==========================================
-    // scene.background = new THREE.Color(CONFIG.colors.bg); // <-- 删掉或注释这行
+
     scene.background = null; // <-- 改成这行
 
     // 【建议】如果有雾效 (fog)，建议也注释掉，不然背景图会有一层灰蒙蒙的雾
@@ -332,6 +328,8 @@ function initThree() {
         powerPreference: "high-performance" 
     });
     
+    renderer.setClearColor(0x000000, 0);
+
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ReinhardToneMapping;
@@ -727,7 +725,7 @@ function animate() {
     mainGroup.rotation.x = STATE.rotation.x;
 
     particleSystem.forEach(p => p.update(dt, STATE.mode, STATE.focusTarget));
-    renderer.render(scene, camera);
+    composer.render();
 }
 
 init();
