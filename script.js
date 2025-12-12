@@ -5,6 +5,9 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
+// ==========================================
+// 1. 照片和音乐路径配置
+// ==========================================
 const PRELOAD_PHOTOS = [
     './photos/1.jpg',
     './photos/2.jpg',
@@ -19,22 +22,22 @@ const PRELOAD_PHOTOS = [
     './photos/11.jpg',
     './photos/12.jpg'
 ];
-let bgTexture = null;
 
 const PRELOAD_MUSIC = './music/ms.mp3';
 
 const CONFIG = {
     colors: { bg: 0x000000, champagneGold: 0xffd966, deepGreen: 0x03180a, accentRed: 0x990000 },
     particles: { count: 1500, dustCount: 2500, treeHeight: 24, treeRadius: 8 },
-    camera: { z: 50 },
+    // 【新增】下落氛围配置
     falling: { 
-        count: 400,        // 雪花和星星的总数
+        count: 800,        // 雪花和星星的总数
         speed: 2.5,        // 下落速度
         rangeX: 60,        // 水平分布范围
         rangeZ: 30,        // 前后分布范围
         topY: 40,          // 生成高度（顶部）
         bottomY: -20       // 消失高度（底部）
     },
+    camera: { z: 50 },
     interaction: { rotationSpeed: 1.4, grabRadius: 0.55 }
 };
 
@@ -54,7 +57,7 @@ const FONT_STYLES = {
     'style5': { font: "'Abril Fatface', cursive", spacing: "0px", shadow: "0 5px 15px rgba(0,0,0,0.8)", transform: "none", weight: "normal" }
 };
 
-// --- IndexedDB (保持不变，用于存储用户手动上传的) ---
+// --- IndexedDB (用于存储用户手动上传的数据) ---
 const DB_NAME = "GrandTreeDB_v16";
 let db;
 
@@ -99,39 +102,37 @@ function loadMusicFromDB() {
     });
 }
 
+// 全局变量
 let scene, camera, renderer, composer;
 let mainGroup, particleSystem = [], photoMeshGroup = new THREE.Group();
-let fallingSystem = [];
+// 【新增】独立的下落氛围组和纹理变量
+let fallingGroup = new THREE.Group(); 
+let fallingSystem = []; 
+let bgTexture = null; 
+
 let clock = new THREE.Clock();
 let handLandmarker, videoElement;
 let caneTexture;
 let bgmAudio = new Audio(); bgmAudio.loop = true; let isMusicPlaying = false;
 
-//加载并尝试自动播放音乐
+// 加载并尝试自动播放音乐
 function loadStaticMusic() {
     bgmAudio.src = PRELOAD_MUSIC; 
-    bgmAudio.loop = true; // 确保循环播放
+    bgmAudio.loop = true; 
 
-    // 尝试直接播放
     bgmAudio.play().then(() => {
-        // 如果成功（通常在有些设置了允许自动播放的浏览器）
         isMusicPlaying = true;
         updatePlayBtnUI(true);
     }).catch((error) => {
-        // 如果失败（被浏览器拦截），则添加一个“一次性”点击监听
         console.log("浏览器限制自动播放，等待用户点击...");
-        
-        // 只要用户点击屏幕任何地方，就开始播放
         const startMusicOnClick = () => {
             bgmAudio.play();
             isMusicPlaying = true;
             updatePlayBtnUI(true);
-            // 移除监听，防止重复触发
             window.removeEventListener('click', startMusicOnClick);
             window.removeEventListener('keydown', startMusicOnClick);
             window.removeEventListener('touchstart', startMusicOnClick);
         };
-
         window.addEventListener('click', startMusicOnClick);
         window.addEventListener('keydown', startMusicOnClick);
         window.addEventListener('touchstart', startMusicOnClick);
@@ -145,15 +146,13 @@ async function init() {
     createTextures();
     createParticles();
     createDust();
+    
+    // 【新增】创建垂直下落的雪花和星光
     createFallingAtmosphere();
-    
-    loadStaticPhotos(); // <--- 这里调用加载本地照片
 
-    loadStaticMusic(); // <--- 这里调用加载本地音乐
+    loadStaticPhotos(); 
+    loadStaticMusic(); 
     
-    // 是否加载默认图
-    // createDefaultPhotos(); 
-
     setupPostProcessing();
     setupEvents();
     animate();
@@ -167,7 +166,6 @@ async function init() {
 
         const savedPhotos = await loadPhotosFromDB();
         if(savedPhotos && savedPhotos.length > 0) {
-            // 如果数据库里有用户上传的照片，追加显示
              savedPhotos.forEach(item => createPhotoTexture(item.data, item.id));
         }
 
@@ -183,9 +181,6 @@ async function init() {
     initDraggableTitle();
 }
 
-// ==========================================
-// 【修改点 2】新增：专门用于加载本地静态照片的函数
-// ==========================================
 function loadStaticPhotos() {
     PRELOAD_PHOTOS.forEach((path, index) => {
         const img = new Image();
@@ -194,8 +189,6 @@ function loadStaticPhotos() {
             const tex = new THREE.Texture(img);
             tex.colorSpace = THREE.SRGBColorSpace;
             tex.needsUpdate = true;
-            // id 使用 'static_' 前缀，避免和用户上传的冲突
-            // 第三个参数传 path，方便调试
             addPhotoToScene(tex, 'static_' + index, path);
         };
         img.onerror = () => {
@@ -231,20 +224,6 @@ window.toggleUI = function() {
     } else {
         tl.classList.remove('panel-hidden'); bl.classList.remove('panel-hidden'); gest.classList.remove('panel-hidden'); btn.innerText = "👁 隐藏界面";
     }
-}
-
-function resizeBackground() {
-    if (!bgTexture || !bgTexture.image) return;
-
-    const canvasAspect = window.innerWidth / window.innerHeight;
-    const imageAspect = bgTexture.image.width / bgTexture.image.height;
-    const factor = imageAspect / canvasAspect;
-    
-    bgTexture.offset.x = factor > 1 ? (1 - 1 / factor) / 2 : 0;
-    bgTexture.repeat.x = factor > 1 ? 1 / factor : 1;
-
-    bgTexture.offset.y = factor > 1 ? 0 : (1 - factor) / 2;
-    bgTexture.repeat.y = factor > 1 ? 1 : factor;
 }
 
 window.toggleCameraDisplay = function() {
@@ -333,12 +312,13 @@ function initThree() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
 
+    // 【修改】加载背景图到 3D 场景中，解决 PostProcessing 遮挡 CSS 背景的问题
     const loader = new THREE.TextureLoader();
     loader.load('./photos/bg.jpg', (texture) => {
-        bgTexture = texture; // 保存纹理引用
+        bgTexture = texture; // 保存引用以便缩放
         texture.colorSpace = THREE.SRGBColorSpace;
         scene.background = texture;
-        resizeBackground(); // 图片加载完成后立即计算一次比例
+        resizeBackground(); // 立即计算一次
     });
 
     camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -346,7 +326,7 @@ function initThree() {
 
     renderer = new THREE.WebGLRenderer({ 
         antialias: true, 
-        alpha: true,
+        alpha: true, // 允许透明
         powerPreference: "high-performance" 
     });
     
@@ -357,8 +337,12 @@ function initThree() {
     renderer.toneMapping = THREE.ReinhardToneMapping;
     renderer.toneMappingExposure = 2.2;
     container.appendChild(renderer.domElement);
+    
     mainGroup = new THREE.Group();
     scene.add(mainGroup);
+
+    // 【新增】把下落氛围组加入场景 (独立于 mainGroup)
+    scene.add(fallingGroup);
 }
 
 function setupEnvironment() {
@@ -384,6 +368,21 @@ function setupPostProcessing() {
     bloomPass.threshold = 0.7; bloomPass.strength = 0.45; bloomPass.radius = 0.4;
     composer = new EffectComposer(renderer);
     composer.addPass(renderScene); composer.addPass(bloomPass);
+}
+
+// 【新增】背景图等比例适配函数 (模拟 CSS background-size: cover)
+function resizeBackground() {
+    if (!bgTexture || !bgTexture.image) return;
+
+    const canvasAspect = window.innerWidth / window.innerHeight;
+    const imageAspect = bgTexture.image.width / bgTexture.image.height;
+    const factor = imageAspect / canvasAspect;
+
+    bgTexture.offset.x = factor > 1 ? (1 - 1 / factor) / 2 : 0;
+    bgTexture.repeat.x = factor > 1 ? 1 / factor : 1;
+
+    bgTexture.offset.y = factor > 1 ? 0 : (1 - factor) / 2;
+    bgTexture.repeat.y = factor > 1 ? 1 : factor;
 }
 
 function createTextures() {
@@ -513,74 +512,76 @@ function createDust() {
     }
 }
 
-//创建下落的雪花和星光
+// 【新增】创建下落的雪花和星光 (添加到 independent 的 fallingGroup)
 function createFallingAtmosphere() {
-    const snowGeo = new THREE.TetrahedronGeometry(0.12, 0); // 雪花形状（四面体）
-    const starGeo = new THREE.OctahedronGeometry(0.15, 0);  // 星星形状（八面体）
+    // 清空旧的（防止重复调用堆积）
+    while(fallingGroup.children.length > 0){ 
+        fallingGroup.remove(fallingGroup.children[0]); 
+    }
+    fallingSystem = [];
 
-    // 雪花材质：半透明白色
+    const snowGeo = new THREE.TetrahedronGeometry(0.12, 0); 
+    const starGeo = new THREE.OctahedronGeometry(0.15, 0); 
+
     const snowMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
         opacity: 0.8
     });
 
-    // 星光材质：高发光金色（配合辉光特效会很漂亮）
+    // 星光材质：高发光
     const starMat = new THREE.MeshStandardMaterial({
         color: 0xffffee,
-        emissive: 0xffdd88,     // 自发光颜色
-        emissiveIntensity: 2.5, // 发光强度
+        emissive: 0xffdd88,
+        emissiveIntensity: 2.5,
         roughness: 0,
         metalness: 1
     });
 
     for (let i = 0; i < CONFIG.falling.count; i++) {
-        // 30% 是星星，70% 是雪花
-        const isStar = Math.random() > 0.7;
+        const isStar = Math.random() > 0.7; // 30% 星星
         const mesh = new THREE.Mesh(isStar ? starGeo : snowGeo, isStar ? starMat : snowMat);
 
-        // 随机初始位置
         mesh.position.set(
-            (Math.random() - 0.5) * CONFIG.falling.rangeX,
+            (Math.random() - 0.5) * CONFIG.falling.rangeX * 1.5, 
             Math.random() * (CONFIG.falling.topY - CONFIG.falling.bottomY) + CONFIG.falling.bottomY,
-            (Math.random() - 0.5) * CONFIG.falling.rangeZ + 15 // +15 让它更靠近相机一点
+            (Math.random() - 0.5) * CONFIG.falling.rangeZ
         );
 
-        // 存储每个粒子的独立运动参数
         mesh.userData = {
-            velocity: (0.5 + Math.random() * 0.5) * CONFIG.falling.speed, // 随机速度
-            wobbleSpeed: Math.random() * 2.0, // 摇摆频率
-            wobbleAmp: Math.random() * 0.5,   // 摇摆幅度
-            offset: Math.random() * 100       // 时间偏移
+            velocity: (0.5 + Math.random() * 0.5) * CONFIG.falling.speed,
+            wobbleSpeed: Math.random() * 2.0, 
+            wobbleAmp: Math.random() * 0.5,   
+            offset: Math.random() * 100       
         };
 
-        // 随机旋转
         mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
 
-        mainGroup.add(mesh);
+        fallingGroup.add(mesh); // 加到独立组，不随树旋转
         fallingSystem.push(mesh);
     }
 }
+
+// 【新增】更新下落动画
 function updateFallingParticles(dt) {
     fallingSystem.forEach(mesh => {
         const data = mesh.userData;
 
-        // 1. 向下移动
+        // 垂直下落
         mesh.position.y -= data.velocity * dt;
 
-        // 2. 左右轻微摇摆 (模拟空气阻力)
+        // 左右摇摆
         mesh.position.x += Math.sin(clock.elapsedTime * data.wobbleSpeed + data.offset) * data.wobbleAmp * dt;
 
-        // 3. 自身旋转
+        // 自转
         mesh.rotation.x += dt;
         mesh.rotation.z += dt * 0.5;
 
-        // 4. 边界检查：如果掉到底部，就瞬移回顶部
+        // 循环
         if (mesh.position.y < CONFIG.falling.bottomY) {
             mesh.position.y = CONFIG.falling.topY;
-            // 重新随机 X 和 Z，让分布更自然
-            mesh.position.x = (Math.random() - 0.5) * CONFIG.falling.rangeX;
-            mesh.position.z = (Math.random() - 0.5) * CONFIG.falling.rangeZ + 15;
+            mesh.position.x = (Math.random() - 0.5) * CONFIG.falling.rangeX * 1.5;
+            mesh.position.z = (Math.random() - 0.5) * CONFIG.falling.rangeZ;
         }
     });
 }
@@ -611,7 +612,8 @@ function addPhotoToScene(texture, id, base64) {
     const frameMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.champagneGold, metalness: 1.0, roughness: 0.1 });
     const frame = new THREE.Mesh(frameGeo, frameMat);
     const photoGeo = new THREE.PlaneGeometry(1.2, 1.2);
-    const photoMat = new THREE.MeshBasicMaterial({ map: texture });
+    // 开启透明支持，防止png黑边
+    const photoMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
     const photo = new THREE.Mesh(photoGeo, photoMat);
     photo.position.z = 0.04;
     const group = new THREE.Group();
@@ -658,7 +660,6 @@ async function initMediaPipe() {
     try {
         const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
         handLandmarker = await HandLandmarker.createFromOptions(vision, {
-            // 注意：这里引用的是之前下载到本地的 AI 模型文件
             baseOptions: { modelAssetPath: "./hand_landmarker.task", delegate: "GPU" },
             runningMode: "VIDEO", numHands: 1
         });
@@ -689,7 +690,6 @@ async function predictWebcam() {
     requestAnimationFrame(predictWebcam);
 }
 
-// --- REALTIME ZERO-LATENCY GESTURES ---
 function processGestures(result) {
     const hint = document.getElementById('gesture-hint');
     if (result.landmarks && result.landmarks.length > 0) {
@@ -703,7 +703,6 @@ function processGestures(result) {
         const tips = [lm[8], lm[12], lm[16], lm[20]];
         let openDist = 0; tips.forEach(t => openDist += Math.hypot(t.x - wrist.x, t.y - wrist.y)); openDist /= 4;
 
-        // Immediate switching without buffer
         if (pinchDist < 0.05) {
             hint.innerText = "状态: 抓取 / 聚焦";
             if (STATE.mode !== 'FOCUS') {
@@ -738,9 +737,9 @@ window.setupEvents = function() {
         composer.setSize(window.innerWidth, window.innerHeight);
         
         // 【新增】窗口大小改变时，重新计算背景图比例
-        resizeBackground(); 
+        resizeBackground();
     });
-
+    
     document.getElementById('file-input').addEventListener('change', (e) => {
         const files = e.target.files;
         if(!files.length) return;
@@ -828,7 +827,10 @@ function animate() {
     mainGroup.rotation.x = STATE.rotation.x;
 
     particleSystem.forEach(p => p.update(dt, STATE.mode, STATE.focusTarget));
+    
+    // 【新增】更新下落雪花动画
     updateFallingParticles(dt);
+
     composer.render();
 }
 
