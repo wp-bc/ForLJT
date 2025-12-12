@@ -566,7 +566,7 @@ async function initMediaPipe() {
     try {
         const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
         handLandmarker = await HandLandmarker.createFromOptions(vision, {
-            // 注意：这里引用的是你之前下载到本地的 AI 模型文件
+            // 注意：这里引用的是之前下载到本地的 AI 模型文件
             baseOptions: { modelAssetPath: "./hand_landmarker.task", delegate: "GPU" },
             runningMode: "VIDEO", numHands: 1
         });
@@ -727,7 +727,7 @@ function animate() {
     mainGroup.rotation.x = STATE.rotation.x;
 
     particleSystem.forEach(p => p.update(dt, STATE.mode, STATE.focusTarget));
-    composer.render();
+    renderer.render(scene, camera);
 }
 
 init();
