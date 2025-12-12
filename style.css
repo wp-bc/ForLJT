@@ -1,0 +1,156 @@
+/* --- 基础样式 --- */
+body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Songti SC', 'SimSun', serif; }
+#canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+
+/* 引入精选艺术字体 */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&family=Monoton&family=Abril+Fatface&family=Ma+Shan+Zheng&display=swap');
+
+/* --- UI 层 --- */
+#ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+
+/* 隐藏动画类 */
+.panel-hidden { opacity: 0 !important; pointer-events: none !important; transform: translateX(-20px); }
+.hidden { display: none !important; }
+
+/* 按钮样式 */
+.elegant-btn {
+    background: rgba(10, 10, 10, 0.85); border: 1px solid rgba(212, 175, 55, 0.4);
+    color: #d4af37; padding: 8px 12px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 1px; font-size: 11px;
+    transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); text-decoration: none; min-width: 100px;
+    font-family: 'Microsoft YaHei', sans-serif; pointer-events: auto; border-radius: 2px;
+    box-sizing: border-box;
+}
+.elegant-btn:hover { background: #d4af37; color: #000; border-color: #d4af37; }
+.elegant-btn input[type="file"] { display: none !important; }
+.btn-red { border-color: #844; color: #eaa; }
+.btn-red:hover { background: #922; color: #fff; }
+
+#play-pause-btn { width: 100%; margin-bottom: 6px; font-weight: bold; border-color: #d4af37; padding: 8px; }
+
+/* --- 标题 (可拖拽) --- */
+#title-container {
+    position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
+    text-align: center; pointer-events: auto; cursor: move;
+    z-index: 50; transition: color 0.2s; user-select: none; padding: 10px;
+}
+.title-line {
+    margin: 0; transition: all 0.2s ease; white-space: nowrap;
+    color: #fceea7; text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+/* --- 左侧侧边栏容器 --- */
+#left-sidebar {
+    position: absolute; top: 20px; left: 20px; width: 200px;
+    display: flex; flex-direction: column; gap: 10px; 
+    pointer-events: none; 
+    z-index: 20;
+}
+
+/* --- 左上角：设置面板 --- */
+.top-left-panel {
+    pointer-events: auto; display: flex; flex-direction: column; gap: 8px;
+    background: rgba(5, 5, 5, 0.8); padding: 12px; border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.2); backdrop-filter: blur(8px);
+    transition: all 0.4s ease;
+    font-family: 'Microsoft YaHei', sans-serif;
+    width: 100%; box-sizing: border-box; 
+}
+.panel-header { color: #888; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 2px; font-size: 10px; letter-spacing: 1px; }
+
+.control-row { display: flex; flex-direction: column; gap: 3px; }
+.control-label { color: #aaa; font-size: 10px; }
+.input-dark {
+    background: rgba(255,255,255,0.05); border: 1px solid #444; color: #eebb66;
+    padding: 4px 6px; font-size: 11px; outline: none; transition: 0.2s; border-radius: 2px;
+}
+.input-dark:focus { border-color: #d4af37; background: rgba(255,255,255,0.1); }
+
+input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 20px; cursor: pointer; padding: 0; background: none; }
+.slider { -webkit-appearance: none; width: 100%; height: 2px; background: rgba(255,255,255,0.15); outline: none; margin-top: 4px; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #d4af37; border-radius: 50%; cursor: pointer; border: 1px solid #000; }
+select.input-dark { cursor: pointer; appearance: none; }
+select.input-dark option { background: #000; color: #d4af37; padding: 5px; }
+
+/* --- 手势交互指引 --- */
+.left-gesture-panel {
+    pointer-events: none; opacity: 0.9; transition: all 0.4s ease;
+    display: grid; grid-template-columns: 1fr 1fr; 
+    gap: 8px; width: 100%; box-sizing: border-box;
+}
+.gesture-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(10, 10, 10, 0.6); border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 4px; padding: 8px 4px;
+    color: #d4af37; font-family: 'Microsoft YaHei', sans-serif; font-size: 10px;
+}
+.gesture-icon { font-size: 18px; margin-bottom: 2px; filter: drop-shadow(0 0 5px rgba(212,175,55,0.5)); }
+.gesture-text { opacity: 0.8; letter-spacing: 1px; }
+
+/* --- 左下角：媒体管理 --- */
+.bottom-left-panel {
+    position: absolute; bottom: 20px; left: 20px;
+    pointer-events: auto; display: flex; flex-direction: column; gap: 8px;
+    transition: all 0.4s ease; width: 140px;
+}
+.bottom-left-panel .elegant-btn { width: 100%; }
+
+/* --- 右上角：视图控制 --- */
+#top-right-controls {
+    position: absolute; top: 20px; right: 20px;
+    pointer-events: auto; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 50;
+}
+
+/* --- 右下角：摄像头 --- */
+#webcam-wrapper {
+    position: absolute; bottom: 20px; right: 20px;
+    width: 180px; height: 135px;
+    border: 1px solid rgba(212, 175, 55, 0.5); border-radius: 4px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+    overflow: hidden; z-index: 20; pointer-events: auto; background: #000;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+#webcam-wrapper.camera-hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
+#webcam-canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+#cam-status {
+    position: absolute; bottom: 5px; right: 5px; width: 6px; height: 6px; background: #550000;
+    border-radius: 50%; box-shadow: 0 0 4px #ff0000; z-index: 30; transition: 0.2s;
+}
+#cam-status.active { background: #00ff00; box-shadow: 0 0 6px #00ff00; }
+
+/* --- 弹窗 --- */
+#delete-manager {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); z-index: 60;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: auto; backdrop-filter: blur(4px);
+}
+#photo-grid {
+    display: flex; flex-wrap: wrap; gap: 15px; width: 70%; height: 60%;
+    overflow-y: auto; justify-content: center; padding: 20px;
+    border: 1px solid rgba(212,175,55,0.2); margin: 15px 0; background: rgba(20,20,20,0.4);
+    border-radius: 4px;
+}
+.photo-item { width: 80px; height: 80px; position: relative; border: 1px solid #d4af37; transition: 0.1s; }
+.photo-item:hover { transform: scale(1.05); border-color: #fff; }
+.photo-thumb { width: 100%; height: 100%; object-fit: cover; }
+.delete-x {
+    position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; background: #900; color: white;
+    border-radius: 50%; text-align: center; line-height: 18px; font-size: 12px;
+    cursor: pointer; font-weight: bold; border: 1px solid #fff;
+}
+.manager-title { color: #d4af37; font-size: 20px; font-family: 'Microsoft YaHei', serif; letter-spacing: 2px; }
+
+/* --- Loader --- */
+#loader {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #050505; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.4s ease-out;
+}
+.spinner { width: 40px; height: 40px; border: 1px solid rgba(212, 175, 55, 0.1); border-top: 1px solid #d4af37; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.loader-text { color: #d4af37; font-size: 12px; letter-spacing: 3px; margin-top: 20px; font-family: 'Cinzel', serif; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
