@@ -14,7 +14,6 @@ const PRELOAD_PHOTOS = [
     './photos/3.jpg',
     './photos/4.jpg',
     './photos/5.jpg',
-    './photos/6.jpg',
     './photos/7.jpg',
     './photos/8.jpg',
     './photos/9.jpg',
@@ -30,7 +29,7 @@ const CONFIG = {
     particles: { count: 3000, dustCount: 5000, treeHeight: 24, treeRadius: 8 },
     // 【新增】下落氛围配置
     falling: { 
-        count: 800,        // 雪花和星星的总数
+        count: 1000,        // 雪花和星星的总数
         speed: 2.5,        // 下落速度
         rangeX: 60,        // 水平分布范围
         rangeZ: 30,        // 前后分布范围
@@ -320,7 +319,7 @@ function initThree() {
 
     // 【修改】加载背景图到 3D 场景中，解决 PostProcessing 遮挡 CSS 背景的问题
     const loader = new THREE.TextureLoader();
-    loader.load('./photos/bg.jpg', (texture) => {
+    loader.load('./photos/5.jpg', (texture) => {
         bgTexture = texture; // 保存引用以便缩放
         texture.colorSpace = THREE.SRGBColorSpace;
         scene.background = texture;
